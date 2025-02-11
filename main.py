@@ -29,7 +29,7 @@ def backtest(trading_agent, test_data, initial_balance=10000):
             trades.append({
                 'step': env.current_step-1,
                 'price': current_price,
-                'action': 'buy' if 1 <= action <= 4 else 'sell',
+                'action': action ,
                 'position': env.position,
                 'balance': env.balance,
                 'portfolio_value': portfolio_value
@@ -71,7 +71,7 @@ def main():
         logger.info(f"Model saved to {model_path}")
 
         # Prepare test data (last 20% of the dataset)
-        split_idx = int(len(market_data) * 0.8)
+        split_idx = int(len(market_data) * 0.4)
         test_data = market_data.iloc[split_idx:]
         
         # Run backtest
@@ -92,7 +92,7 @@ def main():
         if trades:
             trades_df = pd.DataFrame(trades)
             logger.info("\nTrade Summary:")
-            logger.info(trades_df[['step', 'action', 'price', 'portfolio_value']].to_string())
+            logger.info(trades_df[['step', 'action', 'price', 'balance','portfolio_value']].to_string())
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
