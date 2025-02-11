@@ -17,8 +17,12 @@ class TradingEnv(gym.Env):
         
         logger.info(f"Initialized environment with {self.max_steps + 1} data points")
         
-        # Define action space (0: hold, 1: buy, 2: sell)
-        self.action_space = spaces.Discrete(3)
+        # Define action space (0: hold, 1-4: buy 10-40%, 5-12: sell 10-80%)
+        self.action_space = spaces.Discrete(13)
+        
+        # Define buy and sell percentages
+        self.buy_percentages = [0.1, 0.2, 0.3, 0.4]  # 10-40%
+        self.sell_percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]  # 10-80%
         
         # Define observation space (price data + account info)
         self.observation_space = spaces.Box(
@@ -49,14 +53,21 @@ class TradingEnv(gym.Env):
         
         # Execute trading action
         reward = 0
-        if action == 1 and self.position == 0:  # Buy
-            self.position = self.balance / current_price
-            self.balance = 0
-            logger.debug(f"Buy at price: {current_price}")
-        elif action == 2 and self.position > 0:  # Sell
-            self.balance = self.position * current_price
-            self.position = 0
-            logger.debug(f"Sell at price: {current_price}")
+        if 1 <= action <= 4 and self.balance > 0:  # Buy actions
+            buy_percentage = self.buy_percentages[action - 1]
+            buy_amount = self.balance * buy_percentage
+            new_position = buy_amount / current_price
+            self.position += new_position
+            self.balance -= buy_amount
+            logger.debug(f"Buy {buy_percentage*100}% at price: {current_price}")
+            
+        elif 5 <= action <= 12 and self.position > 0:  # Sell actions
+            sell_percentage = self.sell_percentages[action - 5]
+            sell_position = self.position * sell_percentage
+            sell_amount = sell_position * current_price
+            self.position -= sell_position
+            self.balance += sell_amount
+            logger.debug(f"Sell {sell_percentage*100}% at price: {current_price}")
                 
         # Move to next step
         self.current_step += 1

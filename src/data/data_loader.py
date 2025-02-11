@@ -16,7 +16,7 @@ class DataLoader:
         self.symbol = symbol
         self.timeframe = timeframe
 
-    def load_data(self, start_date=None, limit=3000):
+    def load_data(self, start_date=None, limit=5000):
         """
         Load historical market data
         
@@ -29,7 +29,7 @@ class DataLoader:
         """
         try:
             if start_date is None:
-                start_date = datetime.now() - timedelta(days=30)
+                start_date = datetime.now() - timedelta(days=1000)
             
             since = int(start_date.timestamp() * 1000)
             ohlcv = self.exchange.fetch_ohlcv(

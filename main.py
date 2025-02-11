@@ -29,7 +29,7 @@ def main():
         trading_agent = TradingAgent(trading_env)
 
         # Train the agent
-        total_timesteps = len(market_data) * 10  # 10 episodes
+        total_timesteps = len(market_data) * 20  # 10 episodes
         logger.info(f"Starting training for {total_timesteps} timesteps")
         trading_agent.train(total_timesteps=total_timesteps)
 
