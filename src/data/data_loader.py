@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 class DataLoader:
-    def __init__(self, data_source, symbol='BTC/USDT', timeframe='4h'):
+    def __init__(self, data_source, symbol='BTC/USDT', timeframe='6h'):
         """
         Initialize DataLoader with exchange and trading pair
         
@@ -45,7 +45,9 @@ class DataLoader:
             )
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             df.set_index('timestamp', inplace=True)
-            
+            print(" ----------------------------------------")
+            print(df.head())
+            print(df["close"])
             return df
             
         except Exception as e:
