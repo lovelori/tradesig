@@ -17,12 +17,12 @@ class TradingEnv(gym.Env):
         
         logger.info(f"Initialized environment with {self.max_steps + 1} data points")
         
-        # Define action space (0: hold, 1-4: buy 10-40%, 5-12: sell 10-80%)
-        self.action_space = spaces.Discrete(13)
+        # Define action space (0: hold, 1-4: buy 10-40%, 5-8: sell 10-40%)
+        self.action_space = spaces.Discrete(9)
         
-        # Define buy and sell percentages
+        # Define buy and sell percentages (both 10-40%)
         self.buy_percentages = [0.1, 0.2, 0.3, 0.4]  # 10-40%
-        self.sell_percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]  # 10-80%
+        self.sell_percentages = [0.1, 0.2, 0.3, 0.4]  # 10-40%
         
         # Define observation space (price data + account info)
         self.observation_space = spaces.Box(
@@ -61,7 +61,7 @@ class TradingEnv(gym.Env):
             self.balance -= buy_amount
             logger.debug(f"Buy {buy_percentage*100}% at price: {current_price}")
             
-        elif 5 <= action <= 12 and self.position > 0:  # Sell actions
+        elif 5 <= action <= 8 and self.position > 0:  # Sell actions
             sell_percentage = self.sell_percentages[action - 5]
             sell_position = self.position * sell_percentage
             sell_amount = sell_position * current_price
@@ -103,15 +103,30 @@ class TradingEnv(gym.Env):
             return 0.0
             
         try:
-            current_value = self.balance
-            if self.position > 0:
-                current_value = self.position * float(self.data.iloc[self.current_step]['close'])
-                
-            prev_value = self.balance
-            if self.position > 0:
-                prev_value = self.position * float(self.data.iloc[self.current_step-1]['close'])
-                
-            return float((current_value - prev_value) / prev_value)
+            # Calculate portfolio values
+            current_price = float(self.data.iloc[self.current_step]['close'])
+            prev_price = float(self.data.iloc[self.current_step-1]['close'])
+            current_portfolio_value = self.balance + (self.position * current_price)
+            prev_portfolio_value = self.balance + (self.position * prev_price)
+            
+            # Calculate returns
+            portfolio_return = (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
+            market_return = (current_price - prev_price) / prev_price
+            
+            # Calculate Sharpe-like ratio component (excess returns over market)
+            excess_return = portfolio_return - market_return
+            
+            # Add position holding cost (penalize holding positions)
+            holding_cost = -0.0001 * abs(self.position)  # Small fee for holding positions
+            
+            # Combine components
+            reward = (
+                portfolio_return * 1.0 +  # Base return
+                excess_return * 0.5 +     # Reward for beating market
+                holding_cost              # Holding cost penalty
+            )
+            
+            return float(reward)
         except Exception as e:
             logger.error(f"Error calculating reward: {e}")
             return 0.0

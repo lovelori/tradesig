@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 class DataLoader:
-    def __init__(self, data_source, symbol='BTC/USDT', timeframe='6h'):
+    def __init__(self, data_source, symbol='DOGE/USDT', timeframe='6h'):
         """
         Initialize DataLoader with exchange and trading pair
         

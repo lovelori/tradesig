@@ -26,7 +26,7 @@ def backtest(trading_agent, test_data, initial_balance=10000):
         portfolio_value = env.balance + (env.position * current_price)
         
         if action != 0:  # If trade occurred
-            trades.append({
+            trades.append({ 
                 'step': env.current_step-1,
                 'price': current_price,
                 'action': action ,
@@ -53,14 +53,14 @@ def main():
             
         logger.info(f"Loaded {len(market_data)} data points")
 
-        # Initialize trading environment
+        # Initialize trading environment   
         trading_env = TradingEnv(market_data)
         
         # Initialize trading agent
         trading_agent = TradingAgent(trading_env)
 
         # Train the agent
-        num_episodes = 20
+        num_episodes = 10
         total_timesteps = len(market_data) * num_episodes
         logger.info(f"Starting training for {num_episodes} episodes ({total_timesteps} timesteps)")
         trading_agent.train(total_timesteps=total_timesteps)
@@ -71,7 +71,7 @@ def main():
         logger.info(f"Model saved to {model_path}")
 
         # Prepare test data (last 20% of the dataset)
-        split_idx = int(len(market_data) * 0.4)
+        split_idx = int(len(market_data) * 0.8)
         test_data = market_data.iloc[split_idx:]
         
         # Run backtest
@@ -91,8 +91,7 @@ def main():
         
         if trades:
             trades_df = pd.DataFrame(trades)
-            logger.info("\nTrade Summary:")
-            logger.info(trades_df[['step', 'action', 'price', 'balance','portfolio_value']].to_string())
+            trades_df.to_csv("backtest_trades.csv", index=False)
 
     except Exception as e:
         logger.error(f"An error occurred: {e}")
