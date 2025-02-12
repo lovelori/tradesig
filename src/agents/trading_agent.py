@@ -94,28 +94,12 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         return values, log_prob, entropy
 
 class TradingAgent:
-    def __init__(self, env, algorithm="A2C"):
+    def __init__(self, env, algorithm="DQN"):
         try:
             self.env = env
-            # Explicitly set device
             device = "cuda" if th.cuda.is_available() else "cpu"
             
-            if algorithm == "A2C":
-                self.model = A2C(
-                    policy=CustomActorCriticPolicy,
-                    env=env,
-                    learning_rate=0.0003,
-                    n_steps=5,
-                    gamma=0.99,
-                    gae_lambda=0.95,
-                    ent_coef=0.01,
-                    vf_coef=0.5,
-                    max_grad_norm=0.5,
-                    use_rms_prop=True,
-                    device=device,
-                    verbose=1
-                )
-            elif algorithm == "PPO":
+            if algorithm == "PPO":
                 self.model = PPO("MlpPolicy", env, verbose=1)
             elif algorithm == "DQN":
                 self.model = DQN("MlpPolicy", env, verbose=1)

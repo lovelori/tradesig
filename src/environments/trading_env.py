@@ -122,7 +122,7 @@ class TradingEnv(gym.Env):
             # Combine components
             reward = (
                 portfolio_return * 1.0 +  # Base return
-                excess_return * 0.5 +     # Reward for beating market
+                excess_return * 0.2 +     # Reward for beating market
                 holding_cost              # Holding cost penalty
             )
             
