@@ -94,13 +94,13 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         return values, log_prob, entropy
 
 class TradingAgent:
-    def __init__(self, env, algorithm="DQN"):
+    def __init__(self, env, algorithm="PPO"):
         try:
             self.env = env
             device = "cuda" if th.cuda.is_available() else "cpu"
             
             if algorithm == "PPO":
-                self.model = PPO("MlpPolicy", env, verbose=1)
+                self.model = PPO("MlpPolicy", env, verbose=1,device='cpu')
             elif algorithm == "DQN":
                 self.model = DQN("MlpPolicy", env, verbose=1)
             else:

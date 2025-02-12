@@ -2,18 +2,20 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 import logging
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TradingEnv(gym.Env):
-    def __init__(self, data, initial_balance=10000):
+    def __init__(self, data, initial_balance=10000, lookback=10):
         super(TradingEnv, self).__init__()
         
         self.data = data
         self.initial_balance = initial_balance
         self.current_step = 0
         self.max_steps = len(data) - 1
+        self.lookback = lookback  # Number of historical time steps to include
         
         logger.info(f"Initialized environment with {self.max_steps + 1} data points")
         
@@ -24,11 +26,12 @@ class TradingEnv(gym.Env):
         self.buy_percentages = [0.1, 0.2, 0.3, 0.4]  # 10-40%
         self.sell_percentages = [0.1, 0.2, 0.3, 0.4]  # 10-40%
         
-        # Define observation space (price data + account info)
+        # Define observation space (historical OHLCV + portfolio value)
+        # 5 features (OHLCV) * lookback periods + 1 portfolio value
         self.observation_space = spaces.Box(
             low=-np.inf, 
             high=np.inf, 
-            shape=(6,),  # OHLCV + position
+            shape=(5 * lookback + 1,),  
             dtype=np.float32
         )
         
@@ -79,52 +82,74 @@ class TradingEnv(gym.Env):
         return observation, reward, self.done, False, {}
     
     def _get_observation(self):
-        if self.current_step > self.max_steps:
-            logger.warning("Attempting to get observation beyond data range")
-            return np.zeros(6, dtype=np.float32)
-            
         try:
-            current_data = self.data.iloc[self.current_step]
-            obs = np.array([
-                float(current_data['open']),
-                float(current_data['high']),
-                float(current_data['low']),
-                float(current_data['close']),
-                float(current_data['volume']),
-                float(self.position)
-            ], dtype=np.float32)
+            end_idx = self.current_step
+            start_idx = max(0, end_idx - self.lookback + 1)
+            
+            # Get historical data
+            historical_data = self.data.iloc[start_idx:end_idx + 1]
+            
+            # Pad with zeros if not enough historical data
+            if len(historical_data) < self.lookback:
+                pad_length = self.lookback - len(historical_data)
+                pad_data = pd.DataFrame(0, index=range(pad_length), 
+                                      columns=historical_data.columns)
+                historical_data = pd.concat([pad_data, historical_data])
+            
+            # Extract OHLCV values
+            ohlcv_data = []
+            for _, row in historical_data.iterrows():
+                ohlcv_data.extend([
+                    float(row['open']),
+                    float(row['high']),
+                    float(row['low']),
+                    float(row['close']),
+                    float(row['volume'])
+                ])
+            
+            # Calculate current portfolio value
+            current_price = float(self.data.iloc[self.current_step]['close'])
+            portfolio_value = self.balance + (self.position * current_price)
+            
+            # Combine historical OHLCV with portfolio value
+            obs = np.array(ohlcv_data + [portfolio_value], dtype=np.float32)
+            
             return obs
+            
         except Exception as e:
             logger.error(f"Error creating observation: {e}")
-            return np.zeros(6, dtype=np.float32)
+            # Return zero array with correct shape
+            return np.zeros(5 * self.lookback + 1, dtype=np.float32)
     
     def _calculate_reward(self):
         if self.current_step == 0:
             return 0.0
             
         try:
-            # Calculate portfolio values
+            # Calculate current total value
             current_price = float(self.data.iloc[self.current_step]['close'])
             prev_price = float(self.data.iloc[self.current_step-1]['close'])
             current_portfolio_value = self.balance + (self.position * current_price)
             prev_portfolio_value = self.balance + (self.position * prev_price)
             
-            # Calculate returns
-            portfolio_return = (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
-            market_return = (current_price - prev_price) / prev_price
+            # Calculate absolute value changes
+            portfolio_value_change = current_portfolio_value - prev_portfolio_value
+            market_value_change = (current_price - prev_price) * self.position
             
-            # Calculate Sharpe-like ratio component (excess returns over market)
-            excess_return = portfolio_return - market_return
+            # Calculate excess value change over market
+            excess_value = portfolio_value_change - market_value_change
             
-            # Add position holding cost (penalize holding positions)
-            holding_cost = -0.0001 * abs(self.position)  # Small fee for holding positions
+            # Position holding cost (fixed fee per position size)
+            holding_cost = -1.0 * abs(self.position * current_price * 0.0001)  # 0.01% daily holding fee
             
-            # Combine components
+            # Combine components with appropriate scaling
             reward = (
-                portfolio_return * 1.0 +  # Base return
-                excess_return * 0.2 +     # Reward for beating market
-                holding_cost              # Holding cost penalty
+                portfolio_value_change +  # Direct value change
+                excess_value * 0.2     # Bonus for beating market            # Penalty for holding positions
             )
+            
+            # Scale reward to make it more manageable for learning
+            reward = reward / 100.0  # Scale down large absolute values
             
             return float(reward)
         except Exception as e:
