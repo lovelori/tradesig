@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DataLoader:
-    def __init__(self, data_source, symbol='DOGE/USDT', timeframe='6h'):
+    def __init__(self, data_source, symbol='DOGE/USDT', timeframe='4h'):
         """
         Initialize DataLoader with exchange and trading pair
         
@@ -50,7 +50,7 @@ class DataLoader:
             logger.error(f"Error loading from cache: {e}")
         return None
 
-    def load_data(self, start_date=None, limit=8000, use_cache=True):
+    def load_data(self, start_date=None, limit=15000, use_cache=True):
         """
         Load historical market data with caching support
         
@@ -69,7 +69,7 @@ class DataLoader:
 
         try:
             if start_date is None:
-                start_date = datetime.now() - timedelta(days=limit/4)
+                start_date = datetime.now() - timedelta(days=limit/6)
             
             all_ohlcv = []
             batch_size = 1000

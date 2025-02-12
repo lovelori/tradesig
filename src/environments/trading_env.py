@@ -136,16 +136,12 @@ class TradingEnv(gym.Env):
             portfolio_value_change = current_portfolio_value - prev_portfolio_value
             market_value_change = (current_price - prev_price) * self.position
             
-            # Calculate excess value change over market
-            excess_value = portfolio_value_change - market_value_change
-            
-            # Position holding cost (fixed fee per position size)
-            holding_cost = -1.0 * abs(self.position * current_price * 0.0001)  # 0.01% daily holding fee
+           
             
             # Combine components with appropriate scaling
             reward = (
-                portfolio_value_change +  # Direct value change
-                excess_value * 0.2     # Bonus for beating market            # Penalty for holding positions
+                portfolio_value_change  # Direct value change
+                    # Bonus for beating market            # Penalty for holding positions
             )
             
             # Scale reward to make it more manageable for learning
