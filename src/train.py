@@ -30,7 +30,7 @@ def main(symbol='ETH/USDT'):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
     
     # Training parameters
-    num_epochs = 280
+    num_epochs = 320
     
     # Train the model
     train_model(model, train_loader, optimizer, num_epochs)
@@ -46,10 +46,10 @@ def main(symbol='ETH/USDT'):
 if __name__ == '__main__':
     import sys
     symbols = [
-        'BTC/USDT',
-        'BNB/USDT',
         'LTC/USDT',
         'LINK/USDT',
+        'ETH/USDT',
+        'DOGE/USDT',
         'NEAR/USDT'
     ]
     for symbol in symbols:

@@ -46,11 +46,10 @@ def main(symbol='DOGE/USDT'):
 
     # Get market data
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data()
-    
+    market_data = data_loader.load_data(limit=2000,use_cache=True,write_cache=False) #limit=15000,use_cache=True, normalize=True,write_cache=True
     # Only use the most recent 50% of data
-    half_point = len(market_data) // 3
-    market_data = market_data.iloc[half_point:]
+    half_point = int(len(market_data) *0.7)
+    market_data = market_data.iloc[-160:]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
@@ -138,14 +137,12 @@ def main(symbol='DOGE/USDT'):
 
 if __name__ == '__main__':
     import sys
-    symbols = [
-        'BTC/USDT',
-        'BNB/USDT',
+    symbols = ['ETH/USDT',
         'LTC/USDT',
         'LINK/USDT',
+        'DOGE/USDT',
         'NEAR/USDT',
-        'ETH/USDT',
-        "DOGE/USDT"
+
     ]
 
     for symbol in symbols:
