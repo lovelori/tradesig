@@ -1,17 +1,18 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import os
 from models.loss_functions import train_model
 from models.torch_net import TorchNet
 from data.data_loader import DataLoader as CryptoDataLoader
 from data.dataset import CryptoDataset
 
-def main():
+def main(symbol='ETH/USDT'):
     # Initialize model
     model = TorchNet()
     
     # Get market data
-    data_loader = CryptoDataLoader(data_source='binance')
+    data_loader = CryptoDataLoader(data_source='binance', symbol=symbol)
     market_data = data_loader.load_data()
     
     # Create PyTorch dataset
@@ -26,7 +27,7 @@ def main():
     )
     
     # Initialize optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
     
     # Training parameters
     num_epochs = 280
@@ -34,8 +35,15 @@ def main():
     # Train the model
     train_model(model, train_loader, optimizer, num_epochs)
     
-    # Save the trained model
-    torch.save(model.state_dict(), 'trained_model.pth')
+    # Create models directory if it doesn't exist
+    os.makedirs('models', exist_ok=True)
+    
+    # Save the trained model with symbol name
+    model_filename = f'models/{symbol.replace("/", "_")}_model.pth'
+    torch.save(model.state_dict(), model_filename)
+    print(f"Model saved as {model_filename}")
 
 if __name__ == '__main__':
-    main()
+    import sys
+    symbol = 'ETH/USDT'
+    main(symbol)

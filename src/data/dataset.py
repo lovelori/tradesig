@@ -25,7 +25,6 @@ class CryptoDataset(Dataset):
             
         self.sequences = torch.FloatTensor(self.sequences)
         self.targets = torch.FloatTensor(self.targets)
-        print(self.sequences[-1])
     
     def __len__(self):
         return len(self.sequences)

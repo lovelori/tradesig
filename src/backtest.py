@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from data.data_loader import DataLoader
 from models.torch_net import TorchNet
 from data.dataset import CryptoDataset
+import os
 
 class Backtester:
     def __init__(self, initial_capital=1000):
@@ -32,16 +33,23 @@ class Backtester:
     def get_total_value(self, current_price):
         return self.capital + (self.position * current_price)
 
-def main():
+def main(symbol='DOGE/USDT'):
     # Load the trained model
     model = TorchNet()
-    model.load_state_dict(torch.load('trained_model.pth'))
+    model_filename = f'models/{symbol.replace("/", "_")}_model.pth'
+    
+    if not os.path.exists(model_filename):
+        raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
+    
+    model.load_state_dict(torch.load(model_filename))
     model.eval()
 
     # Get market data
-    data_loader = DataLoader(data_source='binance',symbol='ETH/USDT')
+    data_loader = DataLoader(data_source='binance', symbol=symbol)
     market_data = data_loader.load_data()
-    half_point = len(market_data) // 2
+    
+    # Only use the most recent 50% of data
+    half_point = len(market_data) // 3
     market_data = market_data.iloc[half_point:]
     
     # Setup backtester
@@ -129,4 +137,6 @@ def main():
     print(f"Final Portfolio Value: ${backtester.total_value_history[-1]:.2f}")
 
 if __name__ == '__main__':
-    main()
+    import sys
+    symbol =  'ETH/USDT'
+    main(symbol)
