@@ -29,7 +29,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     
     # Training parameters
-    num_epochs = 300
+    num_epochs = 280
     
     # Train the model
     train_model(model, train_loader, optimizer, num_epochs)

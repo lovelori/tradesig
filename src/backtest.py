@@ -1,123 +1,100 @@
 import torch
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from data.data_loader import DataLoader
 from models.torch_net import TorchNet
-from data.data_loader import DataLoader as CryptoDataLoader
+from data.dataset import CryptoDataset
 
-def load_model(model_path):
+class Backtester:
+    def __init__(self, initial_capital=1000):
+        self.capital = initial_capital  # Cash
+        self.position = 0  # Crypto holdings
+        self.total_value_history = []
+        self.price_history = []
+
+    def execute_trade(self, signal, current_price):
+        """
+        Execute trade based on model signal
+        signal: float between -1 and 1
+        """
+        if signal > 0:  # Buy signal
+            buy_amount = self.capital * abs(signal)
+            self.position += buy_amount / current_price
+            self.capital -= buy_amount
+        elif signal < 0:  # Sell signal
+            sell_amount = self.position * abs(signal) 
+            self.position -= sell_amount
+            self.capital += sell_amount * current_price
+
+    def get_total_value(self, current_price):
+        return self.capital + (self.position * current_price)
+
+def main():
+    # Load the trained model
     model = TorchNet()
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load('trained_model.pth'))
     model.eval()
-    return model
 
-def backtest(df, model, window_size=100, initial_capital=1000):
-    """
-    Backtest the trading strategy with separate tracking of position and balance
-    """
-    portfolio_values = [initial_capital]
-    balance = initial_capital  # Cash balance
-    position = 0  # Number of coins held
+    # Get market data
+    data_loader = DataLoader(data_source='binance')
+    market_data = data_loader.load_data()
     
-    # Get features for testing
-    features = df[['open', 'high', 'low', 'close', 'volume']].values.astype(np.float32)
-    
-    for i in range(window_size, len(df)):
-        try:
-            # Get the window of data
-            window = features[i-window_size:i]
-            x = window.T
-            x = torch.tensor(x).unsqueeze(0)
-            
-            # Get model prediction
-            with torch.no_grad():
-                action = model(x).item()  # Value between -1 and 1
-            
-            current_price = features[i, 3]  # Current close price
-            portfolio_value = balance + position * current_price
-            #print(current_price)
-            # Execute trades based on action
-            print(action)
-            if action > 0:  # Buy
-                buy_amount = balance * action
-                new_position = buy_amount / current_price
-                balance -= buy_amount
-                position += new_position
-            elif action < 0:  # Sell
-                sell_ratio = abs(action)
-                sell_position = position * sell_ratio
-                sell_amount = sell_position * current_price
-                balance += sell_amount
-                position -= sell_position
-                
-            # Calculate new portfolio value
-            portfolio_value = balance + position * current_price
-            portfolio_values.append(portfolio_value)
-            
-        except Exception as e:
-            print(f"Error at index {i}: {str(e)}")
-            portfolio_values.append(portfolio_values[-1])
-            continue
-            
-    return portfolio_values, balance, position
+    # Setup backtester
+    backtester = Backtester(initial_capital=1000)
+    sequence_length = 99
 
-def plot_results(df, portfolio_values):
-    """
-    Plot the portfolio value and price curves
-    """
+    # Prepare price data
+    prices = market_data['close'].values
+    
+    for i in range(sequence_length, len(prices)):
+        # Prepare input sequence
+        sequence = market_data[['open', 'high', 'low', 'close', 'volume']].values[i-sequence_length:i]
+        sequence = torch.FloatTensor(sequence).unsqueeze(0)  # Add batch dimension
+        
+        # Get model prediction
+        with torch.no_grad():
+            signal = model(sequence).item()
+            signal = np.clip(signal, -1, 1)  # Clip signal to [-1, 1]
+        
+        # Execute trade
+        current_price = prices[i]
+        backtester.execute_trade(signal, current_price)
+        
+        # Record total value
+        total_value = backtester.get_total_value(current_price)
+        backtester.total_value_history.append(total_value)
+        backtester.price_history.append(current_price)
+        if i>1400 and i<1500:
+            print(f"step {i}, signal: {signal}, current price: {current_price}, total value: {total_value}")
+        if i % 100 == 0:
+            print(f"Processing step {i}/{len(prices)}, Total Value: {total_value:.2f}")
+
+    # Plot results
     plt.figure(figsize=(12, 6))
+    plt.plot(backtester.total_value_history, label='Portfolio Value')
     
-    # Ensure x-axis dates and portfolio values have same length
-    dates = df.index[98:len(portfolio_values)+99]  # Adjust date range to match portfolio values
+    # Normalize price to initial capital for comparison
+    normalized_prices = prices[sequence_length:] * (1000 / prices[sequence_length])
+    plt.plot(normalized_prices, label='Buy & Hold', alpha=0.7)
     
-    # Plot portfolio value
-    plt.plot(dates, portfolio_values, label='Portfolio Value', color='blue')
-    
-    # Plot price for comparison (normalized to start at initial_capital)
-    price_series = df['close'].values[99:len(portfolio_values)+99]  # Match length with portfolio values
-    initial_price = price_series[0]
-    normalized_prices = price_series * (1000 / initial_price)
-    #plt.plot(dates, normalized_prices, label='Buy & Hold', color='gray', alpha=0.6)
-    
-    plt.title('Backtest Results')
-    plt.xlabel('Date')
-    plt.ylabel('Portfolio Value')
+    plt.title('Backtesting Results')
+    plt.xlabel('Time Steps')
+    plt.ylabel('Value ($)')
     plt.legend()
     plt.grid(True)
+    plt.savefig('backtest_results.png')
     plt.show()
 
-if __name__ == "__main__":
-    # Load the saved model
-    model = load_model('best_model.pth')
+    # Print final statistics
+    initial_price = prices[sequence_length]
+    final_price = prices[-1]
+    buy_hold_return = (final_price - initial_price) / initial_price * 100
+    strategy_return = (backtester.total_value_history[-1] - 1000) / 1000 * 100
     
-    # Load the same data used for training
-    data_loader = CryptoDataLoader(
-        data_source='binance',
-        symbol='ETH/USDT',
-        timeframe='4h'
-    )
-    
-    # Load all data
-    df = data_loader.load_data(
-        limit=15000,
-        use_cache=True,
-        normalize=True
-    )
-    
-    # Split data - use last 30% for backtesting
-    split_idx = int(len(df) * 0.5)  # 70% train, 30% test
-    test_df = df.iloc[split_idx:]
-    
-    # Run backtest on test data
-    portfolio_values, final_balance, final_position = backtest(test_df, model, window_size=99, initial_capital=1000)
-    
-    # Calculate metrics
-    total_return = (portfolio_values[-1] - portfolio_values[0]) / portfolio_values[0] * 100
-    print(f"Backtest Period: {test_df.index[0]} to {test_df.index[-1]}")
-    print(f"Total Return: {total_return:.2f}%")
-    print(f"Final Balance: ${final_balance:.2f}")
-    print(f"Final Position: {final_position:.6f} coins")
-    print(f"Final Portfolio Value: ${portfolio_values[-1]:.2f}")
-    
-    # Plot results
-    plot_results(test_df, portfolio_values)
+    print(f"\nBacktesting Results:")
+    print(f"Buy & Hold Return: {buy_hold_return:.2f}%")
+    print(f"Strategy Return: {strategy_return:.2f}%")
+    print(f"Final Portfolio Value: ${backtester.total_value_history[-1]:.2f}")
+
+if __name__ == '__main__':
+    main()
