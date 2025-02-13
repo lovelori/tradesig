@@ -3,11 +3,13 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 import logging
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 class DataLoader:
-    def __init__(self, data_source, symbol='DOGE/USDT', timeframe='4h'):
+    def __init__(self, data_source, symbol='ETH/USDT', timeframe='4h'):
         """
         Initialize DataLoader with exchange and trading pair
         
@@ -50,17 +52,18 @@ class DataLoader:
             logger.error(f"Error loading from cache: {e}")
         return None
 
-    def load_data(self, start_date=None, limit=15000, use_cache=True):
+    def load_data(self, start_date=None, limit=15000, use_cache=True, normalize=True):
         """
-        Load historical market data with caching support
+        Load historical market data with caching support and optional normalization
         
         Args:
             start_date (datetime): Start date for historical data
             limit (int): Total number of candles to fetch
             use_cache (bool): Whether to use cached data if available
+            normalize (bool): Whether to normalize the data
             
         Returns:
-            pd.DataFrame: Historical market data
+            pd.DataFrame: Historical market data (normalized if specified)
         """
         if use_cache:
             cached_data = self._load_from_cache()
@@ -102,6 +105,11 @@ class DataLoader:
             df = df.drop_duplicates()  # Remove any potential duplicates
 
             # Save to cache
+            
+            
+            if normalize and df is not None:
+                df = self.normalize_data(df)
+            df['delta']=df['close'].diff()
             self._save_to_cache(df)
             
             return df
@@ -109,6 +117,38 @@ class DataLoader:
         except Exception as e:
             logger.error(f"Error loading data: {e}")
             return None
+
+    def normalize_data(self, df):
+        """
+        Normalize the OHLCV data using MinMaxScaler
+        
+        Args:
+            df (pd.DataFrame): Original DataFrame with OHLCV data
+            
+        Returns:
+            pd.DataFrame: Normalized DataFrame
+        """
+        try:
+            # Create a copy of the DataFrame
+            df_normalized = df.copy()
+            
+            # Initialize the scaler
+            scaler = MinMaxScaler()
+            
+            # Columns to normalize
+            columns_to_normalize = ['open', 'high', 'low', 'close', 'volume']
+            
+            # Fit and transform the data
+            normalized_data = scaler.fit_transform(df_normalized[columns_to_normalize])
+            
+            # Update the DataFrame with normalized values
+            df_normalized[columns_to_normalize] = normalized_data
+            
+            return df_normalized
+            
+        except Exception as e:
+            logger.error(f"Error normalizing data: {e}")
+            return df
 
     def get_latest_data(self):
         """
