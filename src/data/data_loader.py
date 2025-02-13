@@ -52,7 +52,7 @@ class DataLoader:
             logger.error(f"Error loading from cache: {e}")
         return None
 
-    def load_data(self, start_date=None, limit=15000, use_cache=True, normalize=True):
+    def load_data(self, start_date=None, limit=15000, use_cache=True, normalize=True,write_cache=True):
         """
         Load historical market data with caching support and optional normalization
         
@@ -110,7 +110,8 @@ class DataLoader:
             if normalize and df is not None:
                 df = self.normalize_data(df)
             df['delta']=df['close'].diff()
-            self._save_to_cache(df)
+            if write_cache:
+                self._save_to_cache(df)
             
             return df
             

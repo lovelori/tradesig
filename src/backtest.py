@@ -92,7 +92,7 @@ def main(symbol='DOGE/USDT'):
     # Plot portfolio value and buy & hold comparison
     ax1.plot(backtester.total_value_history, label='Portfolio Value')
     ax1.plot(normalized_prices, label='Buy & Hold', alpha=0.7)
-    ax1.set_title('Backtesting Results')
+    ax1.set_title(f'Backtesting Results for {symbol.replace("/", "_")}')
     ax1.set_xlabel('Time Steps')
     ax1.set_ylabel('Value ($)')
     ax1.legend()
@@ -122,7 +122,7 @@ def main(symbol='DOGE/USDT'):
     ax2.grid(True)
     
     plt.tight_layout()
-    plt.savefig('backtest_results.png')
+    plt.savefig(f'backtest_results_{symbol.replace("/", "_")}.png')
     plt.show()
 
     # Print final statistics
@@ -131,12 +131,22 @@ def main(symbol='DOGE/USDT'):
     buy_hold_return = (final_price - initial_price) / initial_price * 100
     strategy_return = (backtester.total_value_history[-1] - 1000) / 1000 * 100
     
-    print(f"\nBacktesting Results:")
+    print(f"\nBacktesting Results:",symbol)
     print(f"Buy & Hold Return: {buy_hold_return:.2f}%")
     print(f"Strategy Return: {strategy_return:.2f}%")
     print(f"Final Portfolio Value: ${backtester.total_value_history[-1]:.2f}")
 
 if __name__ == '__main__':
     import sys
-    symbol =  'ETH/USDT'
-    main(symbol)
+    symbols = [
+        'BTC/USDT',
+        'BNB/USDT',
+        'LTC/USDT',
+        'LINK/USDT',
+        'NEAR/USDT',
+        'ETH/USDT',
+        "DOGE/USDT"
+    ]
+
+    for symbol in symbols:
+        main(symbol)

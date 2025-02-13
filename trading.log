@@ -1,0 +1,77 @@
+2025-02-13 16:25:33,529 - INFO - Starting live trading strategy...
+2025-02-13 16:25:33,549 - INFO - No previous state found, starting fresh
+2025-02-13 16:25:33,581 - INFO - Data loaded from cache: data_cache\ETH_USDT_4h_data.csv
+2025-02-13 16:25:33,585 - INFO - 
+Strategy Update:
+2025-02-13 16:25:33,585 - INFO - Current Price: $0.56
+2025-02-13 16:25:33,585 - INFO - Strategy Signal: 0.2336
+2025-02-13 16:25:33,585 - INFO - Action: BUY
+2025-02-13 16:25:33,586 - INFO - Portfolio Value: $999.94 (Change: $-0.06)
+2025-02-13 16:31:03,353 - INFO - Starting live trading strategy...
+2025-02-13 16:31:03,374 - INFO - Loaded previous state from 2025-02-13T16:25:33.584549
+2025-02-13 16:31:13,609 - ERROR - Error loading data: binance GET https://api.binance.com/api/v3/exchangeInfo
+2025-02-13 16:31:13,620 - ERROR - Error getting signal: 'NoneType' object is not subscriptable
+2025-02-13 16:31:55,901 - INFO - Starting live trading strategy...
+2025-02-13 16:31:55,922 - INFO - Loaded previous state from 2025-02-13T16:25:33.584549
+2025-02-13 16:32:20,133 - INFO - 
+Strategy Update:
+2025-02-13 16:32:20,134 - INFO - Current Price: $0.54
+2025-02-13 16:32:20,134 - INFO - Strategy Signal: -0.9246
+2025-02-13 16:32:20,135 - INFO - Action: SELL
+2025-02-13 16:32:20,135 - INFO - Portfolio Value: $997.02 (Change: $-0.03)
+2025-02-13 16:33:34,245 - INFO - Starting live trading strategy...
+2025-02-13 16:33:34,265 - INFO - Loaded previous state from 2025-02-13T16:32:20.131124
+2025-02-13 16:33:58,730 - INFO - 
+Strategy Update:
+2025-02-13 16:33:58,730 - INFO - Current Price: $0.36
+2025-02-13 16:33:58,732 - INFO - Strategy Signal: -0.8452
+2025-02-13 16:33:58,732 - INFO - Action: SELL
+2025-02-13 16:33:58,732 - INFO - Portfolio Value: $976.42 (Change: $-0.01)
+2025-02-13 16:40:00,134 - INFO - Starting live trading strategy...
+2025-02-13 16:40:00,156 - INFO - Loaded previous state from 2025-02-13T16:33:58.729742
+2025-02-13 16:40:26,235 - INFO - 
+Strategy Update:
+2025-02-13 16:40:26,235 - INFO - Current Price: $0.54
+2025-02-13 16:40:26,235 - INFO - Strategy Signal: -0.9243
+2025-02-13 16:40:26,235 - INFO - Action: SELL
+2025-02-13 16:40:26,236 - INFO - Portfolio Value: $988.25 (Change: $-0.01)
+2025-02-13 16:42:55,801 - INFO - Starting live trading strategy...
+2025-02-13 16:42:55,823 - INFO - Loaded previous state from 2025-02-13T16:40:26.234447
+2025-02-13 16:43:20,095 - INFO - 
+Strategy Update:
+2025-02-13 16:43:20,095 - INFO - Current Price: $0.36
+2025-02-13 16:43:20,096 - INFO - Strategy Signal: -0.8440
+2025-02-13 16:43:20,096 - INFO - Action: SELL
+2025-02-13 16:43:20,096 - INFO - Portfolio Value: $981.82 (Change: $-0.00)
+2025-02-13 16:50:51,970 - INFO - Starting live trading strategy...
+2025-02-13 16:50:51,989 - INFO - Loaded previous state from 2025-02-13T16:43:20.094676
+2025-02-13 16:51:19,158 - INFO - 
+Strategy Update:
+2025-02-13 16:51:19,159 - INFO - Current Price: $0.54
+2025-02-13 16:51:19,159 - INFO - Strategy Signal: -0.9514
+2025-02-13 16:51:19,159 - INFO - Action: SELL
+2025-02-13 16:51:19,160 - INFO - Portfolio Value: $985.53 (Change: $-0.00)
+2025-02-13 16:58:16,012 - INFO - Starting live trading strategy...
+2025-02-13 16:58:16,031 - INFO - Loaded previous state from 2025-02-13T16:51:19.157954
+2025-02-13 16:58:41,393 - INFO - 
+Strategy Update:
+2025-02-13 16:58:41,393 - INFO - Current Price: $0.54
+2025-02-13 16:58:41,394 - INFO - Strategy Signal: -0.9511
+2025-02-13 16:58:41,395 - INFO - Action: SELL
+2025-02-13 16:58:41,395 - INFO - Portfolio Value: $985.52 (Change: $-0.00)
+2025-02-13 16:59:01,768 - INFO - Starting live trading strategy...
+2025-02-13 16:59:01,787 - INFO - Loaded previous state from 2025-02-13T16:58:41.392177
+2025-02-13 16:59:24,539 - INFO - 
+Strategy Update:
+2025-02-13 16:59:24,540 - INFO - Current Price: $0.36
+2025-02-13 16:59:24,540 - INFO - Strategy Signal: -0.8685
+2025-02-13 16:59:24,541 - INFO - Action: SELL
+2025-02-13 16:59:24,541 - INFO - Portfolio Value: $984.50 (Change: $-0.00)
+2025-02-13 17:19:19,678 - INFO - Starting multi-symbol trading strategy...
+2025-02-13 17:19:19,679 - INFO - Loading model from models/BTC_USDT_model.pth
+2025-02-13 17:19:19,700 - INFO - Loading model from models/BNB_USDT_model.pth
+2025-02-13 17:19:19,711 - INFO - Loading model from models/LTC_USDT_model.pth
+2025-02-13 17:19:19,723 - INFO - Loading model from models/LINK_USDT_model.pth
+2025-02-13 17:19:19,734 - INFO - Loading model from models/NEAR_USDT_model.pth
+2025-02-13 17:19:19,745 - INFO - Loading model from models/ETH_USDT_model.pth
+2025-02-13 17:19:19,756 - INFO - Loading model from models/DOGE_USDT_model.pth

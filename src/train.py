@@ -45,5 +45,13 @@ def main(symbol='ETH/USDT'):
 
 if __name__ == '__main__':
     import sys
-    symbol = 'ETH/USDT'
-    main(symbol)
+    symbols = [
+        'BTC/USDT',
+        'BNB/USDT',
+        'LTC/USDT',
+        'LINK/USDT',
+        'NEAR/USDT'
+    ]
+    for symbol in symbols:
+        main(symbol)
+        
