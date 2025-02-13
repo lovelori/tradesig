@@ -84,7 +84,6 @@ class DataLoader:
                 # Update timestamp for next batch
                 if batch_data:
                     current_timestamp = int(batch_data[0]["TIMESTAMP"]) - 1
-                    print(batch_data[-1]["TIMESTAMP"])
                 else:
                     break
 
