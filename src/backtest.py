@@ -11,20 +11,23 @@ class Backtester:
         self.position = 0  # Crypto holdings
         self.total_value_history = []
         self.price_history = []
+        self.signal_history = []  # Add signal history
 
     def execute_trade(self, signal, current_price):
         """
         Execute trade based on model signal
         signal: float between -1 and 1
         """
+        if current_price <= 0:
+            return
         if signal > 0:  # Buy signal
-            buy_amount = self.capital * abs(signal)
-            self.position += buy_amount / current_price
+            buy_amount = self.capital * abs(signal/2)
+            self.position +=  0.9995*buy_amount / current_price
             self.capital -= buy_amount
         elif signal < 0:  # Sell signal
-            sell_amount = self.position * abs(signal) 
+            sell_amount = self.position * abs(signal/2) 
             self.position -= sell_amount
-            self.capital += sell_amount * current_price
+            self.capital += 0.9995*sell_amount * current_price
 
     def get_total_value(self, current_price):
         return self.capital + (self.position * current_price)
@@ -36,8 +39,10 @@ def main():
     model.eval()
 
     # Get market data
-    data_loader = DataLoader(data_source='binance')
+    data_loader = DataLoader(data_source='binance',symbol='ETH/USDT')
     market_data = data_loader.load_data()
+    half_point = len(market_data) // 2
+    market_data = market_data.iloc[half_point:]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
@@ -55,6 +60,7 @@ def main():
         with torch.no_grad():
             signal = model(sequence).item()
             signal = np.clip(signal, -1, 1)  # Clip signal to [-1, 1]
+            backtester.signal_history.append(signal)  # Record signal
         
         # Execute trade
         current_price = prices[i]
@@ -64,24 +70,50 @@ def main():
         total_value = backtester.get_total_value(current_price)
         backtester.total_value_history.append(total_value)
         backtester.price_history.append(current_price)
-        if i>1400 and i<1500:
-            print(f"step {i}, signal: {signal}, current price: {current_price}, total value: {total_value}")
+        
         if i % 100 == 0:
             print(f"Processing step {i}/{len(prices)}, Total Value: {total_value:.2f}")
 
-    # Plot results
-    plt.figure(figsize=(12, 6))
-    plt.plot(backtester.total_value_history, label='Portfolio Value')
+    # Create subplots for better visualization
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), height_ratios=[2, 1])
     
-    # Normalize price to initial capital for comparison
-    normalized_prices = prices[sequence_length:] * (1000 / prices[sequence_length])
-    plt.plot(normalized_prices, label='Buy & Hold', alpha=0.7)
+    # Normalize prices for buy & hold comparison
+    initial_price = prices[sequence_length]
+    normalized_prices = prices[sequence_length:] / initial_price * 1000  # Normalize to initial capital
+
+    # Plot portfolio value and buy & hold comparison
+    ax1.plot(backtester.total_value_history, label='Portfolio Value')
+    ax1.plot(normalized_prices, label='Buy & Hold', alpha=0.7)
+    ax1.set_title('Backtesting Results')
+    ax1.set_xlabel('Time Steps')
+    ax1.set_ylabel('Value ($)')
+    ax1.legend()
+    ax1.grid(True)
     
-    plt.title('Backtesting Results')
-    plt.xlabel('Time Steps')
-    plt.ylabel('Value ($)')
-    plt.legend()
-    plt.grid(True)
+    # Plot trading signals
+    ax2.plot(backtester.signal_history, label='Trading Signals', color='red')
+    ax2.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+    ax2.fill_between(range(len(backtester.signal_history)), 
+                     backtester.signal_history,
+                     0, 
+                     where=(np.array(backtester.signal_history) > 0),
+                     color='green', 
+                     alpha=0.3,
+                     label='Buy Signal')
+    ax2.fill_between(range(len(backtester.signal_history)), 
+                     backtester.signal_history,
+                     0, 
+                     where=(np.array(backtester.signal_history) < 0),
+                     color='red', 
+                     alpha=0.3,
+                     label='Sell Signal')
+    ax2.set_title('Trading Signals')
+    ax2.set_xlabel('Time Steps')
+    ax2.set_ylabel('Signal Strength')
+    ax2.legend()
+    ax2.grid(True)
+    
+    plt.tight_layout()
     plt.savefig('backtest_results.png')
     plt.show()
 
