@@ -44,13 +44,18 @@ def main(symbol='ETH/USDT'):
     print(f"Model saved as {model_filename}")
 
 if __name__ == '__main__':
-    import sys
     symbols = [
         'LTC/USDT',
         'LINK/USDT',
         'ETH/USDT',
         'DOGE/USDT',
-        'NEAR/USDT'
+        # 'NEAR/USDT',
+        # 'SOL/USDT',
+         'AAVE/USDT',
+        # 'AVAX/USDT',
+        # 'DOT/USDT',
+        # 'CRV/USDT',
+        # 'ARB/USDT',
     ]
     for symbol in symbols:
         main(symbol)

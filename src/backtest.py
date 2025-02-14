@@ -39,32 +39,60 @@ def send_email(symbols_data):
     """Send email with latest trading signals"""
     smtp_server = "smtp.163.com"
     smtp_port = 465
-    sender_email = "13972206966@163.com"  # Replace with your Outlook email
-    sender_password = "GFDQbKgycdyNC2pT"    # Replace with your app password
+    sender_email = "13972206966@163.com"
+    sender_password = "GFDQbKgycdyNC2pT"
     receiver_email = "cdha0@outlook.com"
-    # Create message
+
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = receiver_email
     msg['Subject'] = f"Trading Signals Update - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
-    # Create email body
-    body = "Latest Trading Signals:\n\n"
+    # Create HTML table
+    html = """
+    <html>
+    <head>
+        <style>
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid black; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .positive { color: red; }
+            .negative { color: green; }
+        </style>
+    </head>
+    <body>
+        <h2>Latest Trading Signals</h2>
+        <table>
+            <tr>
+                <th>Symbol</th>
+                <th>Signal</th>
+                <th>Last Price</th>
+            </tr>
+    """
+
     for symbol, data in symbols_data.items():
-        body += f"{symbol}:\n"
-        body += f"Signal: {data:.4f}\n"       
-        body += "-" * 30 + "\n"
+        signal = data['signal']
+        price = data['price']
+        signal_class = 'positive' if signal > 0 else 'negative'
+        html += f"""
+            <tr>
+                <td>{symbol}</td>
+                <td class="{signal_class}">{signal:.4f}</td>
+                <td>{price:.4f}</td>
+            </tr>
+        """
 
-    msg.attach(MIMEText(body, 'plain'))
+    html += """
+        </table>
+    </body>
+    </html>
+    """
 
-    # Send email
+    msg.attach(MIMEText(html, 'html'))
+
     try:
-        server = smtplib.SMTP(smtp_server)
-        print("Connected to SMTP server")
-        server.starttls()
-        print("starttls done")
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
         server.login(sender_email, sender_password)
-        print("Logged in")
         server.send_message(msg)
         server.quit()
         print("Email sent successfully")
@@ -84,10 +112,10 @@ def main(symbol='DOGE/USDT'):
 
     # Get market data
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data(limit=640,use_cache=False,write_cache=False) #limit=15000,use_cache=True, normalize=True,write_cache=True
+    market_data = data_loader.update_data() #limit=15000,use_cache=True, normalize=True,write_cache=True
     # Only use the most recent 50% of data
     #half_point = int(len(market_data) *0.7)
-    #market_data = market_data.iloc[half_point:]
+    market_data = market_data.iloc[-110:]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
@@ -95,6 +123,7 @@ def main(symbol='DOGE/USDT'):
 
     # Prepare price data
     prices = market_data['close'].values
+    last_price = prices[-1]
     last_signal = None
     for i in range(sequence_length, len(prices)):
         # Prepare input sequence
@@ -107,7 +136,7 @@ def main(symbol='DOGE/USDT'):
             signal = np.clip(signal, -1, 1)  # Clip signal to [-1, 1]
             backtester.signal_history.append(signal)  # Record signal
             last_signal = signal
-    return last_signal    
+    return {'signal': last_signal, 'price': last_price}  
         # Execute trade
     #     current_price = prices[i]
     #     backtester.execute_trade(signal, current_price)
@@ -130,7 +159,7 @@ def main(symbol='DOGE/USDT'):
     # # Plot portfolio value and buy & hold comparison
     # ax1.plot(backtester.total_value_history, label='Portfolio Value')
     # ax1.plot(normalized_prices, label='Buy & Hold', alpha=0.7)
-    # ax1.set_title(f'Backtesting Results for {symbol.replace("/", "_")}')
+    # ax1.set_title(f'Backtesting Results for {symbol.replace("/", "_')}')
     # ax1.set_xlabel('Time Steps')
     # ax1.set_ylabel('Value ($)')
     # ax1.legend()
@@ -175,10 +204,12 @@ def main(symbol='DOGE/USDT'):
     # print(f"Final Portfolio Value: ${backtester.total_value_history[-1]:.2f}")
 
 if __name__ == '__main__':
-    symbols = ['ETH/USDT',
+    symbols = [
+        'ETH/USDT',
         'LTC/USDT',
         'LINK/USDT',
-
+        'DOGE/USDT',
+        'AAVE/USDT',
     ]
 
     symbols_data = {}

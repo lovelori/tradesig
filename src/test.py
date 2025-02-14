@@ -84,10 +84,10 @@ def main(symbol='DOGE/USDT'):
 
     # Get market data
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data(limit=150,use_cache=False,write_cache=False) #limit=15000,use_cache=True, normalize=True,write_cache=True
+    market_data = data_loader.update_data() #limit=15000,use_cache=True, normalize=True,write_cache=True
     # Only use the most recent 50% of data
-    #half_point = int(len(market_data) *0.7)
-    #market_data = market_data.iloc[half_point:]
+    half_point = int(len(market_data) *0.4)
+    market_data = market_data.iloc[half_point:]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
