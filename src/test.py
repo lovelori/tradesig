@@ -86,7 +86,7 @@ def main(symbol='DOGE/USDT'):
     data_loader = DataLoader(data_source='binance', symbol=symbol)
     market_data = data_loader.update_data() #limit=15000,use_cache=True, normalize=True,write_cache=True
     # Only use the most recent 50% of data
-    half_point = int(len(market_data) *0.4)
+    half_point = int(len(market_data) *0.6)
     market_data = market_data.iloc[half_point:]
     
     # Setup backtester
@@ -159,7 +159,7 @@ def main(symbol='DOGE/USDT'):
     ax2.grid(True)
     
     plt.tight_layout()
-    #plt.savefig(f'backtest_results_{symbol.replace("/", "_")}.png')
+    plt.savefig(f'backtest_results_{symbol.replace("/", "_")}.png')
     plt.show()
 
     # Print final statistics
@@ -180,6 +180,8 @@ if __name__ == '__main__':
         'LINK/USDT',
         'DOGE/USDT',
         'AAVE/USDT',
+         'GRT/USDT',
+         '1INCH/USDT',
     ]
 
     symbols_data = {}
