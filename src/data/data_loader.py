@@ -37,7 +37,7 @@ class DataLoader:
         else:
             return 'days', 1
 
-    def load_data(self, start_date=None, limit=2000, use_cache=True, normalize=True, write_cache=True):
+    def load_data(self, start_date=None, limit=3000, use_cache=True, normalize=True, write_cache=True):
         """
         Load historical market data from CryptoCompare
         Handles pagination for requests exceeding 500 records
