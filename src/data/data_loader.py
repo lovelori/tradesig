@@ -45,6 +45,9 @@ class DataLoader:
         if use_cache:
             cached_data = self._load_from_cache()
             if cached_data is not None:
+                if normalize:
+                    cached_data = self.normalize_data(cached_data)
+                cached_data['delta'] = cached_data['close'].diff()
                 return cached_data
 
         try:

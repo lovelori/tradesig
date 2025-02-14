@@ -14,6 +14,7 @@ def main(symbol='ETH/USDT'):
     # Get market data
     data_loader = CryptoDataLoader(data_source='binance', symbol=symbol)
     market_data = data_loader.load_data()
+    print(f"Loaded {len(market_data)} data points for {symbol}")
     
     # Create PyTorch dataset
     dataset = CryptoDataset(market_data)
