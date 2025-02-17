@@ -204,7 +204,7 @@ class DataLoader:
             })
 
             # Set timestamp as index and sort
-            
+            cached_data = cached_data.set_index('timestamp')
             new_df = new_df.set_index('timestamp')
             
             new_df = new_df[['open', 'high', 'low', 'close', 'volume']]

@@ -174,12 +174,13 @@ def main(symbol='DOGE/USDT'):
 
     # Get market data with both normalized and raw values
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    raw_market_data = data_loader.load_data(normalize=False)  # Get raw data
-    normalized_market_data = data_loader.load_data(normalize=True)  # Get normalized data
-    
+     # Get raw data
+     
+    normalized_market_data = data_loader.update_data()  # Get normalized data
+    raw_market_data = data_loader.load_data(normalize=False) 
     # Use last 129 points for both datasets
-    raw_market_data = raw_market_data.iloc[-129:]
-    normalized_market_data = normalized_market_data.iloc[-129:]
+    raw_market_data = raw_market_data.iloc[-129:-1]
+    normalized_market_data = normalized_market_data.iloc[-129:-1]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
@@ -215,11 +216,13 @@ def main(symbol='DOGE/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-        'ETH/USDT',
-        'LTC/USDT',
-        'LINK/USDT',
-        'DOGE/USDT',
-        'AAVE/USDT',
+        #   'LINK/USDT', #0.503
+        #   'ETH/USDT',#1.07
+        #'LTC/USDT',#0.36
+        #  'DOGE/USDT',# 0.954
+        #  'AAVE/USDT',#0.9017
+          'AVAX/USDT',#0.9017
+        
     ]
 
     symbols_data = {}
