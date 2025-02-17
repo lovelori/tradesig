@@ -32,7 +32,7 @@ def main(symbol='ETH/USDT'):
     train_loader = DataLoader(train_dataset, batch_size=train_size)
     test_loader = DataLoader(test_dataset, batch_size=test_size)
     
-    num_epochs = 50
+    num_epochs = 100
     best_test_loss = float('inf')
     
     for epoch in range(num_epochs):
@@ -75,23 +75,23 @@ def main(symbol='ETH/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-         #'LTC/USDT',
+         #'ORDI/USDT',
          #'LINK/USDT',
-         'ETH/USDT',
+         #'ETH/USDT',
          #'DOGE/USDT',
-        # 'AAVE/USDT',
+         #'AAVE/USDT',
         #  'NEAR/USDT',
         #  'SOL/USDT',
-        #  'BTC/USDT',
-        #  'BNB/USDT',
-        #  'AVAX/USDT',
+         # 'BTC/USDT',
+         # 'BNB/USDT',
+         # 'AVAX/USDT',
         #  'DOT/USDT',
-        # # 'ARB/USDT',
-        # 'GRT/USDT',
-        # 'CRV/USDT',
+         'ARB/USDT',
+        
+         #'CRV/USDT',
         # # 'ARB/USDT',
         # # 'OP/USDT',
-        # 'UNI/USDT',
+         'UNI/USDT',
     ]
     for symbol in symbols:
         main(symbol)

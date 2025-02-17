@@ -164,7 +164,7 @@ def main(symbol='DOGE/USDT'):
     """Modified main function to return market data and signals"""
     # Load the trained model
     model = TorchNet()
-    model_filename = f'models/{symbol.replace("/", "_")}_model.pth'
+    model_filename = f'models/best_model_{symbol.replace("/", "_")}.pth'
     
     if not os.path.exists(model_filename):
         raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
@@ -172,27 +172,30 @@ def main(symbol='DOGE/USDT'):
     model.load_state_dict(torch.load(model_filename))
     model.eval()
 
-    # Get market data
+    # Get market data with both normalized and raw values
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.update_data() #limit=15000,use_cache=True, normalize=True,write_cache=True
-    # Only use the most recent 50% of data
-    #half_point = int(len(market_data) *0.7)
-    market_data = market_data.iloc[-129:]
+    raw_market_data = data_loader.load_data(normalize=False)  # Get raw data
+    normalized_market_data = data_loader.load_data(normalize=True)  # Get normalized data
+    
+    # Use last 129 points for both datasets
+    raw_market_data = raw_market_data.iloc[-129:]
+    normalized_market_data = normalized_market_data.iloc[-129:]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
-    sequence_length = 99
+    sequence_length = 32
 
-    # Prepare price data
-    prices = market_data['close'].values
-    last_price = prices[-1]
+    # Prepare price data - use normalized data for model input but raw data for trading
+    normalized_prices = normalized_market_data['close'].values
+    raw_prices = raw_market_data['close'].values
+    last_price = raw_prices[-1]
     last_signal = None
     
     # Store signals in a list
     signals = []
-    for i in range(sequence_length, len(prices)):
-        # Prepare input sequence
-        sequence = market_data[['open', 'high', 'low', 'close', 'volume']].values[i-sequence_length:i]
+    for i in range(sequence_length, len(normalized_prices)):
+        # Prepare input sequence using normalized data
+        sequence = normalized_market_data[['volume', 'high', 'low', 'close']].values[i-sequence_length:i]
         sequence = torch.FloatTensor(sequence).unsqueeze(0)  # Add batch dimension
         
         # Get model prediction
@@ -202,10 +205,11 @@ def main(symbol='DOGE/USDT'):
             signals.append(signal)
             backtester.signal_history.append(signal)  # Record signal
             last_signal = signal
+
     return {
         'signal': last_signal, 
         'price': last_price,
-        'market_data': market_data.iloc[-30:],
+        'market_data': raw_market_data.iloc[-len(signals):],  # Return raw market data
         'signals': signals
     }
 
@@ -216,8 +220,6 @@ if __name__ == '__main__':
         'LINK/USDT',
         'DOGE/USDT',
         'AAVE/USDT',
-        'GRT/USDT',
-        '1INCH/USDT',
     ]
 
     symbols_data = {}

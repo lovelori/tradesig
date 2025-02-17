@@ -18,7 +18,7 @@ class Portfolio:
     
     def buy(self, price, signal):
         """Buy based on positive signal strength"""
-        amount = self.balance * (abs(signal) * 0.3)  # Use up to 50% of balance
+        amount = self.balance * (abs(signal) * 0.4)  # Use up to 50% of balance
         if amount > 0:
             shares = amount / price
             self.position += shares
@@ -27,7 +27,7 @@ class Portfolio:
     def sell(self, price, signal):
         """Sell based on negative signal strength"""
         if self.position > 0:
-            shares = self.position * (abs(signal) * 0.3)  # Sell up to 50% of position
+            shares = self.position * (abs(signal) * 0.4)  # Sell up to 50% of position
             amount = shares * price
             self.position -= shares
             self.balance += amount
@@ -45,7 +45,7 @@ def backtest(symbol='ETH/USDT', plot=True):
 
     # Get market data
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data().iloc[-1200:]
+    market_data = data_loader.load_data().iloc[-100:]
     
     # Initialize portfolio
     portfolio = Portfolio()
@@ -115,8 +115,11 @@ def backtest(symbol='ETH/USDT', plot=True):
 
 if __name__ == '__main__':
     symbols = [
+        'ETH/USDT',
+        'LTC/USDT',
+        'LINK/USDT',
         'DOGE/USDT',
-        # Add more symbols as needed
+        'AAVE/USDT',
     ]
     
     for symbol in symbols:
