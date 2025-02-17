@@ -21,6 +21,7 @@ class DeltaBasedLoss(nn.Module):
         """
         # Ensure tensors are the same shape
         predictions = predictions.squeeze()
+        delta = delta.squeeze()
         if predictions.shape != delta.shape:
             raise ValueError(f"Predictions shape {predictions.shape} must match delta shape {delta.shape}")
             

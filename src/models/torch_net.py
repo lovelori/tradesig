@@ -2,15 +2,15 @@ import torch
 import torch.nn as nn
 
 class TorchNet(nn.Module):
-    def __init__(self):
+    def __init__(self,window_size=32):
         super(TorchNet, self).__init__()
         self.net = nn.Sequential(
             nn.Flatten(),                            # Flatten 5x99 -> 495 features
-            nn.Linear(5 * 99, 128),
+            nn.Linear(4 * window_size, window_size),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(window_size, 6),
             nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(6, 1),
             nn.Tanh()  # Ensures the output is in (-1, 1)
         )
 

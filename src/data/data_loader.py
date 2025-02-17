@@ -45,9 +45,12 @@ class DataLoader:
         if use_cache:
             cached_data = self._load_from_cache()
             if cached_data is not None:
+                zero_close_count = (cached_data['close'] == 0).sum()
+                if zero_close_count > 0:
+                    logger.warning(f"Removed {zero_close_count} rows with zero close price")
+                    cached_data = cached_data[cached_data['close'] != 0]
                 if normalize:
                     cached_data = self.normalize_data(cached_data)
-                cached_data['delta'] = cached_data['close'].diff()
                 return cached_data
 
         try:
@@ -119,12 +122,15 @@ class DataLoader:
                 df = df.set_index('timestamp')
                 df = df[['open', 'high', 'low', 'close', 'volume']]
                 df = df.astype(float)
+                
+                zero_close_count = (df['close'] == 0).sum()
+                if zero_close_count > 0:
+                    logger.warning(f"Removed {zero_close_count} rows with zero close price")
+                    df = df[df['close'] != 0]
                 if write_cache:
                     self._save_to_cache(df)
                 if normalize:
                     df = self.normalize_data(df)
-                
-                df['delta'] = df['close'].diff()
                 
                 
                 
@@ -218,7 +224,7 @@ class DataLoader:
                 combined_df = self.normalize_data(combined_df)
 
             # Calculate delta
-            combined_df['delta'] = combined_df['close'].diff()
+            
             
 
             return combined_df
@@ -246,7 +252,7 @@ class DataLoader:
         try:
             cache_file = self._get_cache_filename()
             if os.path.exists(cache_file):
-                df = pd.read_csv(cache_file, index_col=0)
+                df = pd.read_csv(cache_file)
                 
                 logger.info(f"Data loaded from cache: {cache_file}")
                 return df
@@ -272,7 +278,7 @@ class DataLoader:
             scaler = MinMaxScaler()
             
             # Columns to normalize
-            columns_to_normalize = ['open', 'high', 'low', 'close', 'volume']
+            columns_to_normalize = [ 'high', 'low', 'close', 'volume']
             
             # Fit and transform the data
             normalized_data = scaler.fit_transform(df_normalized[columns_to_normalize])
