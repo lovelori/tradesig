@@ -15,7 +15,7 @@ def main(symbol='ETH/USDT'):
     # Initialize model and move to GPU
     model = TorchNet(window_size).to(device)
     criterion = DeltaBasedLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.007)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.012)
     
     # Get market data
     data_loader = CryptoDataLoader(data_source='binance', symbol=symbol)
@@ -75,22 +75,17 @@ def main(symbol='ETH/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-        #  'LINK/USDT', #0.503
+          'LTC/USDT',#0.2670
+        #   'LINK/USDT', #0.915
         #  'ETH/USDT',#1.07
-       #  'LTC/USDT',#0.36
+       
         # 'DOGE/USDT',# 0.954
-       #  'AAVE/USDT',#0.9017
+        # 'AAVE/USDT',#0.9017
         # 'NEAR/USDT',#1.17
        #  'SOL/USDT',#0.6
        #  'AVAX/USDT',#0.58
-         'OP/USDT',#0.779
-         'UNI/USDT',
-         'INj/USDT',
-         'FIL/USDT',
-         'ENS/USDT',
-         'SNX/USDT',
-         'ORDI/USDT',
-         '1INCH/USDT',
+       #  'OP/USDT',#0.779
+
     ]
     for symbol in symbols:
         main(symbol)

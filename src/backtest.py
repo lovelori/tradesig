@@ -216,12 +216,15 @@ def main(symbol='DOGE/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-        #   'LINK/USDT', #0.503
-        #   'ETH/USDT',#1.07
-        #'LTC/USDT',#0.36
-        #  'DOGE/USDT',# 0.954
-        #  'AAVE/USDT',#0.9017
-          'AVAX/USDT',#0.9017
+        'NEAR/USDT',#1.17
+       'LINK/USDT', #0.915
+         'ETH/USDT',#1.07
+       
+        'DOGE/USDT',# 0.954
+        'AAVE/USDT',#0.9017
+        'SOL/USDT',#0.6
+        'AVAX/USDT',#0.58
+        'OP/USDT',#0.779
         
     ]
 

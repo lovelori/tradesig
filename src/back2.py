@@ -45,7 +45,7 @@ def backtest(symbol='ETH/USDT', plot=True):
 
     # Get market data
     data_loader = DataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data().iloc[-1000:]
+    market_data = data_loader.load_data().iloc[-1000:-1]
     
     # Initialize portfolio
     portfolio = Portfolio()
@@ -115,10 +115,15 @@ def backtest(symbol='ETH/USDT', plot=True):
 
 if __name__ == '__main__':
     symbols = [
-        # 'ETH/USDT',
-        # 'LINK/USDT',
-        'DOGE/USDT',
-        'AAVE/USDT',
+         'LINK/USDT', #0.915
+         'ETH/USDT',#1.07
+       
+        'DOGE/USDT',# 0.954
+        'AAVE/USDT',#0.9017
+        'NEAR/USDT',#1.17
+        'SOL/USDT',#0.6
+        'AVAX/USDT',#0.58
+        'OP/USDT',#0.779
     ]
     
     for symbol in symbols:
