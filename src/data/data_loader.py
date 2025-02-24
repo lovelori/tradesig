@@ -168,7 +168,7 @@ class DataLoader:
             params = {
                 'market': 'binance',
                 'instrument': self.instrument,
-                'limit': 10,
+                'limit': 60,
                 'aggregate': self.aggregate,
                 'fill': 'true',
                 'apply_mapping': 'true',
