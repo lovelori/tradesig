@@ -9,7 +9,7 @@ class CryptoDataset(Dataset):
         self.features = ['volume', 'high', 'low', 'close']
         
     def __len__(self):
-        return len(self.df) - self.sequence_length - 5  # -5 for future window
+        return len(self.df) - self.sequence_length - 3  # -5 for future window
         
     def __getitem__(self, idx):
         # Get sequence data for features
@@ -21,7 +21,7 @@ class CryptoDataset(Dataset):
         # Calculate y: (mean(close[t+1:t+6]) - close[t]) / close[t]
         current_close = self.df.iloc[idx + self.sequence_length - 1]['close']
         
-        future_closes = self.df.iloc[idx + self.sequence_length:idx + self.sequence_length + 5]['close'].values
+        future_closes = self.df.iloc[idx + self.sequence_length:idx + self.sequence_length + 3]['close'].values
         future_mean = np.mean(future_closes)
         y = (future_mean - current_close) 
         

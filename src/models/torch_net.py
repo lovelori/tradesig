@@ -6,9 +6,9 @@ class TorchNet(nn.Module):
         super(TorchNet, self).__init__()
         self.net = nn.Sequential(
             nn.Flatten(),                            # Flatten 5x99 -> 495 features
-            nn.Linear(4 * window_size, window_size),
+            nn.Linear(4 * window_size, 16),
             nn.ReLU(),
-            nn.Linear(window_size, 6),
+            nn.Linear(16, 6),
             nn.ReLU(),
             nn.Linear(6, 1),
             nn.Tanh()  # Ensures the output is in (-1, 1)

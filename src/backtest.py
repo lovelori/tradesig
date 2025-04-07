@@ -51,7 +51,7 @@ def send_email(symbols_data):
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = receiver_email
-    msg['Subject'] = f"Trading Signals Update - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    msg['Subject'] = f"{datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
     # Create HTML table
     html = """
@@ -67,7 +67,7 @@ def send_email(symbols_data):
         </style>
     </head>
     <body>
-        <h2>Latest Trading Signals</h2>
+        
         <table>
             <tr>
                 <th>Symbol</th>
@@ -163,7 +163,8 @@ def create_signal_chart(market_data, signals, symbol):
 def main(symbol='DOGE/USDT'):
     """Modified main function to return market data and signals"""
     # Load the trained model
-    model = TorchNet()
+    sequence_length = 48
+    model = TorchNet(sequence_length)
     model_filename = f'models/best_model_{symbol.replace("/", "_")}.pth'
     
     if not os.path.exists(model_filename):
@@ -179,12 +180,12 @@ def main(symbol='DOGE/USDT'):
     normalized_market_data = data_loader.update_data()  # Get normalized data
     raw_market_data = data_loader.load_data(normalize=False) 
     # Use last 129 points for both datasets
-    raw_market_data = raw_market_data.iloc[-129:-1]
-    normalized_market_data = normalized_market_data.iloc[-129:-1]
+    raw_market_data = raw_market_data.iloc[-100:-1]
+    normalized_market_data = normalized_market_data.iloc[-100:-1]
     
     # Setup backtester
     backtester = Backtester(initial_capital=1000)
-    sequence_length = 32
+    
 
     # Prepare price data - use normalized data for model input but raw data for trading
     normalized_prices = normalized_market_data['close'].values
@@ -216,17 +217,21 @@ def main(symbol='DOGE/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-        'CRV/USDT',
-       'LTC/USDT',#1.17
-       'LINK/USDT', #0.915
-        'ETH/USDT',#1.07
+    #     'CRV/USDT',
+    #    'LTC/USDT',#1.17
+    #    'LINK/USDT', #0.915
+    #     'ETH/USDT',#1.07
        
-        'DOGE/USDT',# 0.954
-       'AAVE/USDT',#0.9017
-     'NEAR/USDT',
-    #     'SOL/USDT',#0.6
-        'AVAX/USDT',#0.58
-    #     'OP/USDT',#0.779
+     'LTC/USDT',#0.2670
+          'LINK/USDT', #1.6
+    #      'ETH/USDT',#1.63
+    #    'NEAR/USDT',
+         'DOGE/USDT',# 0.954
+    #    'AAVE/USDT',#0.9017
+    #  'NEAR/USDT',
+    # #     'SOL/USDT',#0.6
+    #     'AVAX/USDT',#0.58
+    # #     'OP/USDT',#0.779
         
     ]
 

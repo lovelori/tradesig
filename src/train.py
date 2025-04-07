@@ -11,15 +11,15 @@ def main(symbol='ETH/USDT'):
     # Set device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
-    window_size=32
+    window_size=48
     # Initialize model and move to GPU
     model = TorchNet(window_size).to(device)
     criterion = DeltaBasedLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.02)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.015)
     
     # Get market data
     data_loader = CryptoDataLoader(data_source='binance', symbol=symbol)
-    market_data = data_loader.load_data(limit=15000)
+    market_data = data_loader.load_data(limit=16000)
     print(f"Loaded {len(market_data)} data points for {symbol}")
     
     # Split dataset
@@ -32,7 +32,7 @@ def main(symbol='ETH/USDT'):
     train_loader = DataLoader(train_dataset, batch_size=train_size)
     test_loader = DataLoader(test_dataset, batch_size=test_size)
     
-    num_epochs = 70
+    num_epochs = 75
     best_test_loss = float('inf')
     
     for epoch in range(num_epochs):
@@ -75,15 +75,15 @@ def main(symbol='ETH/USDT'):
 
 if __name__ == '__main__':
     symbols = [
-        #  'LTC/USDT',#0.2670
-        #   'LINK/USDT', #1.6
-         # 'ETH/USDT',#1.63
-       
-        # 'DOGE/USDT',# 0.954
+         'LTC/USDT',#0.2670
+          'LINK/USDT', #1.6
+         'ETH/USDT',#1.63
+       'NEAR/USDT',
+         'DOGE/USDT',# 0.954
         # 'AAVE/USDT',#0.9017
         # 'NEAR/USDT',#1.17
        # 'SOL/USDT',#0.6
-        'AVAX/USDT',#0.58
+        #'ORDI/USDT',#0.58
        #  'OP/USDT',#0.779
 
     ]
