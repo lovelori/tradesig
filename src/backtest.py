@@ -214,6 +214,60 @@ def main(symbol='DOGE/USDT'):
         'market_data': raw_market_data.iloc[-len(signals):],  # Return raw market data
         'signals': signals
     }
+def main2(symbol='LTC/USDT'):
+    """Modified main function to return market data and signals"""
+    # Load the trained model
+    sequence_length = 32
+    model = TorchNet(sequence_length,sequence_length)
+    model_filename = f'models/best_model_{symbol.replace("/", "_")}1.pth'
+    
+    if not os.path.exists(model_filename):
+        raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
+    
+    model.load_state_dict(torch.load(model_filename))
+    model.eval()
+
+    # Get market data with both normalized and raw values
+    data_loader = DataLoader(data_source='binance', symbol=symbol)
+     # Get raw data
+     
+    normalized_market_data = data_loader.update_data()  # Get normalized data
+    raw_market_data = data_loader.load_data(normalize=False) 
+    # Use last 129 points for both datasets
+    raw_market_data = raw_market_data.iloc[-100:-1]
+    normalized_market_data = normalized_market_data.iloc[-100:-1]
+    
+    # Setup backtester
+    backtester = Backtester(initial_capital=1000)
+    
+
+    # Prepare price data - use normalized data for model input but raw data for trading
+    normalized_prices = normalized_market_data['close'].values
+    raw_prices = raw_market_data['close'].values
+    last_price = raw_prices[-1]
+    last_signal = None
+    
+    # Store signals in a list
+    signals = []
+    for i in range(sequence_length, len(normalized_prices)):
+        # Prepare input sequence using normalized data
+        sequence = normalized_market_data[['volume', 'high', 'low', 'close']].values[i-sequence_length:i]
+        sequence = torch.FloatTensor(sequence).unsqueeze(0)  # Add batch dimension
+        
+        # Get model prediction
+        with torch.no_grad():
+            signal = model(sequence).item()
+            signal = np.clip(signal, -1, 1)  # Clip signal to [-1, 1]
+            signals.append(signal)
+            backtester.signal_history.append(signal)  # Record signal
+            last_signal = signal
+
+    return {
+        'signal': last_signal, 
+        'price': last_price,
+        'market_data': raw_market_data.iloc[-len(signals):],  # Return raw market data
+        'signals': signals
+    }
 
 if __name__ == '__main__':
     symbols = [
@@ -240,5 +294,7 @@ if __name__ == '__main__':
         print(f"Processing {symbol}...")
         result = main(symbol)
         symbols_data[symbol] = result
+    result2 = main2()
+    symbols_data['LTC2/USDT'] = result2
         
     send_email(symbols_data)

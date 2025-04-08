@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 
 class TorchNet(nn.Module):
-    def __init__(self,window_size=32):
+    def __init__(self,window_size=32,win2=16):
         super(TorchNet, self).__init__()
         self.net = nn.Sequential(
             nn.Flatten(),                            # Flatten 5x99 -> 495 features
-            nn.Linear(4 * window_size, 16),
+            nn.Linear(4 * window_size, win2),
             nn.ReLU(),
-            nn.Linear(16, 6),
+            nn.Linear(win2, 6),
             nn.ReLU(),
             nn.Linear(6, 1),
             nn.Tanh()  # Ensures the output is in (-1, 1)
@@ -17,9 +17,5 @@ class TorchNet(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-if __name__ == '__main__':
-    model = TorchNet()
-    # Create a random tensor with shape (batch_size, 5, 99)
-    x = torch.randn(1, 5, 99)
-    y = model(x)
-    print("Output:", y.item())
+
+
