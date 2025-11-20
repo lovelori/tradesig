@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from data.data_loader import DataLoader
-from models.torch_net import TorchNet
+from models.torch_net import TorchNet,TorchNet2
 from data.dataset import CryptoDataset
 import os
 import smtplib
@@ -42,11 +42,11 @@ class Backtester:
         return self.capital + (self.position * current_price)
 def send_email(symbols_data):
     """Modified email function to include charts"""
-    smtp_server = "smtp.163.com"
+    smtp_server = "smtp.qq.com"
     smtp_port = 465
-    sender_email = "13972206966@163.com"
-    sender_password = "GFDQbKgycdyNC2pT"
-    receiver_email = "cdha0@outlook.com"
+    sender_email = "cdh40@qq.com"
+    sender_password = "ebjklaspayvdbeei"
+    receiver_email = "cdh40@qq.com"
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
@@ -231,7 +231,7 @@ def main2(symbol='LTC/USDT'):
     data_loader = DataLoader(data_source='binance', symbol=symbol)
      # Get raw data
      
-    normalized_market_data = data_loader.update_data()  # Get normalized data
+    normalized_market_data = data_loader.load_data()  # Get normalized data
     raw_market_data = data_loader.load_data(normalize=False) 
     # Use last 129 points for both datasets
     raw_market_data = raw_market_data.iloc[-100:-1]
@@ -269,6 +269,60 @@ def main2(symbol='LTC/USDT'):
         'signals': signals
     }
 
+def main3(symbol='LINK/USDT'):
+    """Modified main function to return market data and signals"""
+    # Load the trained model
+    sequence_length = 48
+    model = TorchNet2(sequence_length)
+    model_filename = f'models/best_model_{symbol.replace("/", "_")}3.pth'
+    
+    if not os.path.exists(model_filename):
+        raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
+    
+    model.load_state_dict(torch.load(model_filename))
+    model.eval()
+
+    # Get market data with both normalized and raw values
+    data_loader = DataLoader(data_source='binance', symbol=symbol)
+     # Get raw data
+     
+    normalized_market_data = data_loader.load_data()  # Get normalized data
+    raw_market_data = data_loader.load_data(normalize=False) 
+    # Use last 129 points for both datasets
+    raw_market_data = raw_market_data.iloc[-100:-1]
+    normalized_market_data = normalized_market_data.iloc[-100:-1]
+    
+    # Setup backtester
+    backtester = Backtester(initial_capital=1000)
+    
+
+    # Prepare price data - use normalized data for model input but raw data for trading
+    normalized_prices = normalized_market_data['close'].values
+    raw_prices = raw_market_data['close'].values
+    last_price = raw_prices[-1]
+    last_signal = None
+    
+    # Store signals in a list
+    signals = []
+    for i in range(sequence_length, len(normalized_prices)):
+        # Prepare input sequence using normalized data
+        sequence = normalized_market_data[['volume', 'high', 'low', 'close']].values[i-sequence_length:i]
+        sequence = torch.FloatTensor(sequence).unsqueeze(0)  # Add batch dimension
+        
+        # Get model prediction
+        with torch.no_grad():
+            signal = model(sequence).item()
+            signal = np.clip(signal, -1, 1)  # Clip signal to [-1, 1]
+            signals.append(signal)
+            backtester.signal_history.append(signal)  # Record signal
+            last_signal = signal
+
+    return {
+        'signal': last_signal, 
+        'price': last_price,
+        'market_data': raw_market_data.iloc[-len(signals):],  # Return raw market data
+        'signals': signals
+    }
 if __name__ == '__main__':
     symbols = [
     #     'CRV/USDT',
@@ -278,9 +332,10 @@ if __name__ == '__main__':
        
      'LTC/USDT',#0.2670
           'LINK/USDT', #1.6
-    #      'ETH/USDT',#1.63
+          'DOGE/USDT', 
+    #      'ETH/USDT',#1.6311111111111
     #    'NEAR/USDT',
-         'DOGE/USDT',# 0.954
+   #11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111      'DOGE/USDT',# 0.954
     #    'AAVE/USDT',#0.9017
     #  'NEAR/USDT',
     # #     'SOL/USDT',#0.6
@@ -296,5 +351,8 @@ if __name__ == '__main__':
         symbols_data[symbol] = result
     result2 = main2()
     symbols_data['LTC2/USDT'] = result2
+
+    result3 = main3()
+    symbols_data['LINK2/USDT'] = result3
         
     send_email(symbols_data)
