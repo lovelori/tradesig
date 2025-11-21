@@ -44,9 +44,10 @@ def send_email(symbols_data):
     """Modified email function to include charts"""
     smtp_server = "smtp.qq.com"
     smtp_port = 465
-    sender_email = "cdh40@qq.com"
-    sender_password = "ebjklaspayvdbeei"
-    receiver_email = "cdh40@qq.com"
+    # Prefer providing these via environment variables (set from Actions secrets)
+    sender_email = os.environ.get('SENDER_EMAIL', 'cdh40@qq.com')
+    sender_password = os.environ.get('SENDER_PASSWORD')
+    receiver_email = os.environ.get('RECEIVER_EMAIL', sender_email)
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
@@ -104,6 +105,11 @@ def send_email(symbols_data):
     """
 
     msg.attach(MIMEText(html, 'html'))
+
+    # If password not provided, skip sending email to avoid failing with credentials exposed
+    if not sender_password:
+        print("SENDER_PASSWORD not set; skipping email send.")
+        return
 
     try:
         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
