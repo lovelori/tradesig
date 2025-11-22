@@ -1,6 +1,5 @@
 *.pyc
 *.zip
 *.png
-*.csv
 *.json
 /.vs/
