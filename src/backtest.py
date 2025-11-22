@@ -176,7 +176,7 @@ def main(symbol='DOGE/USDT'):
     if not os.path.exists(model_filename):
         raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
     
-    model.load_state_dict(torch.load(model_filename))
+    model.load_state_dict(torch.load(model_filename, map_location=torch.device('cpu')))
     model.eval()
 
     # Get market data with both normalized and raw values
@@ -230,7 +230,7 @@ def main2(symbol='LTC/USDT'):
     if not os.path.exists(model_filename):
         raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
     
-    model.load_state_dict(torch.load(model_filename))
+    model.load_state_dict(torch.load(model_filename, map_location=torch.device('cpu')))
     model.eval()
 
     # Get market data with both normalized and raw values
@@ -285,7 +285,7 @@ def main3(symbol='LINK/USDT'):
     if not os.path.exists(model_filename):
         raise FileNotFoundError(f"No trained model found for {symbol}. Please train the model first.")
     
-    model.load_state_dict(torch.load(model_filename))
+    model.load_state_dict(torch.load(model_filename, map_location=torch.device('cpu')))
     model.eval()
 
     # Get market data with both normalized and raw values
