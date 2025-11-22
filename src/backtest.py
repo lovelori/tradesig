@@ -183,7 +183,7 @@ def main(symbol='DOGE/USDT'):
     data_loader = DataLoader(data_source='binance', symbol=symbol)
      # Get raw data
      
-    normalized_market_data = data_loader.load_data(limit=200)  # Get normalized data
+    normalized_market_data = data_loader.load_data(limit=400)  # Get normalized data
     raw_market_data = data_loader.load_data(normalize=False) 
     # Use last 129 points for both datasets
     raw_market_data = raw_market_data.iloc[-100:-1]
