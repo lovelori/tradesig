@@ -6,6 +6,8 @@ from models.torch_net import TorchNet,TorchNet2
 from data.dataset import CryptoDataset
 import os
 import smtplib
+import requests
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -40,8 +42,68 @@ class Backtester:
 
     def get_total_value(self, current_price):
         return self.capital + (self.position * current_price)
-def send_email(symbols_data):
-    """Modified email function to include charts"""
+def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
+    """Scan Binance Futures (USDT) perpetuals.
+    Return list of dicts for symbols meeting: current_price > min_low*min_multiplier and latest fundingRate > 0.
+    """
+    exchange_info_url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
+    klines_url = "https://fapi.binance.com/fapi/v1/klines"
+    price_url = "https://fapi.binance.com/fapi/v1/ticker/price"
+    funding_url = "https://fapi.binance.com/fapi/v1/fundingRate"
+
+    alerts = []
+    try:
+        r = requests.get(exchange_info_url, timeout=10)
+        r.raise_for_status()
+        symbols = [s['symbol'] for s in r.json().get('symbols', []) if s.get('symbol','').endswith('USDT') and s.get('status') == 'TRADING']
+    except Exception as e:
+        print(f"Failed to fetch exchange info: {e}")
+        return alerts
+
+    if max_symbols:
+        symbols = symbols[:max_symbols]
+
+    for symbol in symbols:
+        try:
+            # get daily klines, we ask for day_window+1 to ensure enough history
+            params = {'symbol': symbol, 'interval': '1d', 'limit': day_window + 1}
+            k = requests.get(klines_url, params=params, timeout=8)
+            k.raise_for_status()
+            klines = k.json()
+            if len(klines) < day_window:
+                continue
+            lows = [float(candle[3]) for candle in klines[-day_window:]]  # low is index 3
+            min_low = min(lows)
+
+            # current price
+            p = requests.get(price_url, params={'symbol': symbol}, timeout=5)
+            p.raise_for_status()
+            price = float(p.json().get('price', 0.0))
+
+            # latest funding rate (limit=1 returns most recent)
+            f = requests.get(funding_url, params={'symbol': symbol, 'limit': 1}, timeout=6)
+            f.raise_for_status()
+            fr_list = f.json()
+            funding_rate = float(fr_list[0].get('fundingRate', 0.0)) if fr_list else 0.0
+
+            if price > min_low * min_multiplier and funding_rate > 0:
+                alerts.append({
+                    'symbol': symbol,
+                    'price': price,
+                    'min_low': min_low,
+                    'multiplier': price / min_low if min_low > 0 else None,
+                    'funding_rate': funding_rate
+                })
+
+            # polite pause to reduce chance of rate limiting
+            time.sleep(0.08)
+        except Exception:
+            # ignore symbol on any failure
+            continue
+
+    return alerts
+def send_email(symbols_data, alerts=None):
+    """Modified email function to include charts and optional alerts"""
     smtp_server = "smtp.qq.com"
     smtp_port = 465
     # Prefer providing these via environment variables (set from Actions secrets)
@@ -54,7 +116,7 @@ def send_email(symbols_data):
     msg['To'] = receiver_email
     msg['Subject'] = f"{datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
-    # Create HTML table
+    # Start HTML content
     html = """
     <html>
     <head>
@@ -68,7 +130,21 @@ def send_email(symbols_data):
         </style>
     </head>
     <body>
-        
+    """
+
+    # Alerts section (from Binance scan)
+    if alerts:
+        html += """
+        <h3>Alerts: current price > 250% of past 5-day low and funding rate > 0</h3>
+        <table>
+            <tr><th>Symbol</th><th>Price</th><th>5d Min</th><th>Price/Min</th><th>Funding Rate</th></tr>
+        """
+        for a in alerts:
+            html += f"<tr><td>{a['symbol']}</td><td>{a['price']:.6f}</td><td>{a['min_low']:.6f}</td><td>{a['multiplier']:.2f}x</td><td>{a['funding_rate']:.8f}</td></tr>"
+        html += "</table>"
+
+    # Existing symbols table
+    html += """
         <table>
             <tr>
                 <th>Symbol</th>
@@ -360,5 +436,8 @@ if __name__ == '__main__':
 
     result3 = main3()
     symbols_data['LINK2/USDT'] = result3
-        
-    send_email(symbols_data)
+
+    # scan Binance futures for alerting (can be slow for many symbols)
+    alerts = scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None)
+
+    send_email(symbols_data, alerts)
