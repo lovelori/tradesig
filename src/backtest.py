@@ -48,10 +48,10 @@ def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
     Return list of dicts for symbols meeting: current_price > min_low*min_multiplier and latest fundingRate > 0.
     Robust to transient HTTP errors and common blocking (451).
     """
-    exchange_info_url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
-    klines_url = "https://fapi.binance.com/fapi/v1/klines"
-    price_url = "https://fapi.binance.com/fapi/v1/ticker/price"
-    funding_url = "https://fapi.binance.com/fapi/v1/fundingRate"
+    exchange_info_url = "https://api.binance.com/api/v3/exchangeInfo"
+    klines_url = "https://api.binance.com/api/v3/klines"
+    price_url = "https://api.binance.com/api/v3/ticker/price"
+    funding_url = "https://api.binance.com/api/v3/fundingRate"
 
     alerts = []
 
