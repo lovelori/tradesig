@@ -14,6 +14,7 @@ from datetime import datetime
 import base64
 from io import BytesIO
 import matplotlib
+from requests.adapters import HTTPAdapter, Retry
 matplotlib.use('Agg')  # Required for non-interactive backend
 
 class Backtester:
@@ -45,6 +46,7 @@ class Backtester:
 def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
     """Scan Binance Futures (USDT) perpetuals.
     Return list of dicts for symbols meeting: current_price > min_low*min_multiplier and latest fundingRate > 0.
+    Robust to transient HTTP errors and common blocking (451).
     """
     exchange_info_url = "https://fapi.binance.com/fapi/v1/exchangeInfo"
     klines_url = "https://fapi.binance.com/fapi/v1/klines"
@@ -52,10 +54,28 @@ def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
     funding_url = "https://fapi.binance.com/fapi/v1/fundingRate"
 
     alerts = []
+
+    # session with retries
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=0.6, status_forcelist=[429, 500, 502, 503, 504])
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; GitHub Actions/1.0)",
+        "Accept": "application/json",
+    }
+
     try:
-        r = requests.get(exchange_info_url, timeout=10)
+        r = session.get(exchange_info_url, timeout=10, headers=headers)
+        # handle legal/region block (451) or other non-200
+        if r.status_code == 451:
+            print("Received 451 from Binance API (likely region/legal block).")
+            print("Options: run from a different runner/VPS, use a proxy, or use a fallback data provider.")
+            return alerts
         r.raise_for_status()
         symbols = [s['symbol'] for s in r.json().get('symbols', []) if s.get('symbol','').endswith('USDT') and s.get('status') == 'TRADING']
+    except requests.HTTPError as e:
+        print(f"HTTP error fetching exchange info: {e} (status {getattr(e.response, 'status_code', 'N/A')})")
+        return alerts
     except Exception as e:
         print(f"Failed to fetch exchange info: {e}")
         return alerts
@@ -65,9 +85,8 @@ def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
 
     for symbol in symbols:
         try:
-            # get daily klines, we ask for day_window+1 to ensure enough history
             params = {'symbol': symbol, 'interval': '1d', 'limit': day_window + 1}
-            k = requests.get(klines_url, params=params, timeout=8)
+            k = session.get(klines_url, params=params, timeout=8, headers=headers)
             k.raise_for_status()
             klines = k.json()
             if len(klines) < day_window:
@@ -75,13 +94,11 @@ def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
             lows = [float(candle[3]) for candle in klines[-day_window:]]  # low is index 3
             min_low = min(lows)
 
-            # current price
-            p = requests.get(price_url, params={'symbol': symbol}, timeout=5)
+            p = session.get(price_url, params={'symbol': symbol}, timeout=5, headers=headers)
             p.raise_for_status()
             price = float(p.json().get('price', 0.0))
 
-            # latest funding rate (limit=1 returns most recent)
-            f = requests.get(funding_url, params={'symbol': symbol, 'limit': 1}, timeout=6)
+            f = session.get(funding_url, params={'symbol': symbol, 'limit': 1}, timeout=6, headers=headers)
             f.raise_for_status()
             fr_list = f.json()
             funding_rate = float(fr_list[0].get('fundingRate', 0.0)) if fr_list else 0.0
@@ -95,10 +112,9 @@ def scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None):
                     'funding_rate': funding_rate
                 })
 
-            # polite pause to reduce chance of rate limiting
             time.sleep(0.08)
         except Exception:
-            # ignore symbol on any failure
+            # ignore symbol on any failure to keep scan resilient
             continue
 
     return alerts
