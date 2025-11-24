@@ -454,6 +454,6 @@ if __name__ == '__main__':
     symbols_data['LINK2/USDT'] = result3
 
     # scan Binance futures for alerting (can be slow for many symbols)
-    alerts = scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None)
+    # alerts = scan_binance_futures(min_multiplier=2.5, day_window=5, max_symbols=None)
 
-    send_email(symbols_data, alerts)
+    send_email(symbols_data)
